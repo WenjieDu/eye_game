@@ -50,24 +50,23 @@ def FR2PIL(img_array):
     return Image.fromarray(np.uint8(img_array))
 
 
-def resize_image(image_path):
+def resize_image(cv_img_array):
     """
     调整图片大小
-    :param image_path: 图片路径
+    :param cv_img_array: cv2.imread函数处理后的返回值
     :return: cv2图片数组
     """
-    img = cv2.imread(image_path)
-    if img.shape[1] > 500:
-        img = cv2.resize(img, (0, 0), fx=0.3, fy=0.3)
-    fr_img = CV2FR(img)
+    if cv_img_array.shape[1] > 500:
+        cv_img_array = cv2.resize(cv_img_array, (0, 0), fx=0.3, fy=0.3)
+    fr_img = CV2FR(cv_img_array)
     face_location = get_face_location(fr_img)
     if face_location:
         # min_val为脸部框四周距离图片边框的最小值
-        min_val = min(face_location[0][0], face_location[0][3], (img.shape[0] - face_location[0][2]),
-                      (img.shape[1] - face_location[0][1]))
-        img = img[(face_location[0][0] - min_val):(face_location[0][2] + min_val),
-              (face_location[0][3] - min_val):(face_location[0][1] + min_val)]
-        resize = cv2.resize(img, (250, 250))  # 调整图片分辨率为250*250
+        min_val = min(face_location[0][0], face_location[0][3], (cv_img_array.shape[0] - face_location[0][2]),
+                      (cv_img_array.shape[1] - face_location[0][1]))
+        cv_img_array = cv_img_array[(face_location[0][0] - min_val):(face_location[0][2] + min_val),
+                       (face_location[0][3] - min_val):(face_location[0][1] + min_val)]
+        resize = cv2.resize(cv_img_array, (250, 250))  # 调整图片分辨率为250*250
         return resize
     else:
         return None
