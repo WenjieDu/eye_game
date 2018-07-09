@@ -124,6 +124,7 @@ def eyeball_direction(cv_img_array):
     fr_img_array = CV2FR(cv_img_array)
     eyes_location = get_eyes_location(fr_img_array)
     if eyes_location is not None:
+        cv_img_array = np.uint8(np.clip(1.1 * cv_img_array + 30, 0, 255))  # 调节亮度与对比度
         left_coordinate = rect_eye(eyes_location["left_eye"])
         right_coordinate = rect_eye(eyes_location["right_eye"])
 
@@ -137,7 +138,6 @@ def eyeball_direction(cv_img_array):
 
         return [left_result, left_percent, right_result, right_percent]
     else:
-        print("bye")
         return None
 
 

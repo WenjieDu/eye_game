@@ -5,7 +5,7 @@ DESCRIPTION = "input: an image containing a human face; output: the eyeball dire
 AUTHOR = "Vanjay Do"
 AUTHOR_EMAIL = "vanjaydo@gmail.com"
 URL = "https://github.com/VanjayDo/eye_game"
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 LICENSE = "MIT Licence"
 
 setup(
