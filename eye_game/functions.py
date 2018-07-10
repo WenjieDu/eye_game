@@ -50,24 +50,32 @@ def FR2PIL(img_array):
     return Image.fromarray(np.uint8(img_array))
 
 
-def resize_image(cv_img_array):
+def image_preproccessing(cv_img_array):
     """
     调整图片大小
     :param cv_img_array: cv2.imread函数处理后的返回值
-    :return: cv2图片数组
+    :return: 脸部cv2图片数组和眼睛坐标
     """
     if cv_img_array.shape[1] > 500:
-        cv_img_array = cv2.resize(cv_img_array, (0, 0), fx=0.3, fy=0.3)
+        cv_img_array = cv2.resize(cv_img_array, (0, 0), fx=0.4, fy=0.4)
     fr_img_array = CV2FR(cv_img_array)
     face_location = get_face_location(fr_img_array)
     if face_location:
-        # min_val为脸部框四周距离图片边框的最小值
-        min_val = min(face_location[0][0], face_location[0][3], (cv_img_array.shape[0] - face_location[0][2]),
-                      (cv_img_array.shape[1] - face_location[0][1]))
-        cv_img_array = cv_img_array[(face_location[0][0] - min_val):(face_location[0][2] + min_val),
-                       (face_location[0][3] - min_val):(face_location[0][1] + min_val)]
-        resize = cv2.resize(cv_img_array, (250, 250))  # 调整图片分辨率为250*250
-        return resize
+        cv_img_array = cv_img_array[face_location[0][0]:face_location[0][2], face_location[0][3]:face_location[0][1]]
+        eye_locations = get_eye_locations(fr_img_array, face_location)
+
+        for i in range(6):
+            height = eye_locations["left_eye"][i][0] - face_location[0][3]
+            width = eye_locations["left_eye"][i][1] - face_location[0][0]
+            eye_locations["left_eye"][i] = (height, width)
+
+        for i in range(6):
+            height = eye_locations["right_eye"][i][0] - face_location[0][3]
+            width = eye_locations["right_eye"][i][1] - face_location[0][0]
+            eye_locations["right_eye"][i] = (height, width)
+
+        result = {"cv_img_array": cv_img_array, "eye_locations": eye_locations}
+        return result
     else:
         return None
 
@@ -82,9 +90,6 @@ def nine_grid(width, height, center):
     """
     width_trisection = int(width / 3)
     height_trisection = int(height / 3)
-    # print("img width is :" + str(width) + "  img height is : " + str(height))
-    # print("width_trisection is :" + str(width_trisection) + "  height_trisection is : " + str(height_trisection))
-    # print("center width is : " + str(center["width"]) + "\ncenter height is : " + str(center["height"]))
 
     if (center["x"] < width_trisection) & (center["y"] < height_trisection):
         return 0
@@ -115,42 +120,40 @@ def get_face_location(fr_img_array):
     return face_location
 
 
-def eyeball_direction(cv_img_array):
+def eyeball_direction(cv_img_array, eye_locations):
     """
     :param cv_img_array: OpenCV中所能使用的图片数组
+    :param eye_locations: 眼睛坐标
     :return: 左眼的九宫位置, 左眼用于判断眼球位置的有效的像素占总数的比例,
              右眼的九宫位置, 右眼用于判断眼球位置的有效的像素占总数的比例.
     """
-    fr_img_array = CV2FR(cv_img_array)
-    eyes_location = get_eyes_location(fr_img_array)
-    if eyes_location is not None:
-        cv_img_array = np.uint8(np.clip(1.1 * cv_img_array + 30, 0, 255))  # 调节亮度与对比度
-        left_coordinate = rect_eye(eyes_location["left_eye"])
-        right_coordinate = rect_eye(eyes_location["right_eye"])
+    cv_img_array = np.uint8(np.clip(1.1 * cv_img_array + 30, 0, 255))  # 调节亮度与对比度
+    left_coordinate = rect_eye(eye_locations["left_eye"])
+    right_coordinate = rect_eye(eye_locations["right_eye"])
 
-        left_eyeball = get_eyeball_location(cv_img_array, left_coordinate)
-        left_percent = left_eyeball["percent"]
-        left_result = left_eyeball["nine_grid_result"]
+    left_eyeball = get_eyeball_location(cv_img_array, left_coordinate)
+    left_percent = left_eyeball["percent"]
+    left_result = left_eyeball["nine_grid_result"]
 
-        right_eyeball = get_eyeball_location(cv_img_array, right_coordinate)
-        right_percent = right_eyeball["percent"]
-        right_result = right_eyeball["nine_grid_result"]
+    right_eyeball = get_eyeball_location(cv_img_array, right_coordinate)
+    right_percent = right_eyeball["percent"]
+    right_result = right_eyeball["nine_grid_result"]
 
-        return [left_result, left_percent, right_result, right_percent]
-    else:
-        return None
+    return [left_result, left_percent, right_result, right_percent]
 
 
-def get_eyes_location(fr_img_array):
+def get_eye_locations(fr_img_array, face_location):
     """
     :param fr_img_array: An image (as a numpy array)
+    :param face_location: face location
     :return: dict include eyes locations
     """
-    if fr.api.face_landmarks(fr_img_array):
-        left_eye = fr.api.face_landmarks(fr_img_array)[0]["left_eye"]
-        right_eye = fr.api.face_landmarks(fr_img_array)[0]["right_eye"]
-        eyes_location = {"left_eye": left_eye, "right_eye": right_eye}
-        return eyes_location
+    face_landmarks = fr.api.face_landmarks(fr_img_array, face_locations=face_location)
+    if face_landmarks:
+        left_eye = face_landmarks[0]["left_eye"]
+        right_eye = face_landmarks[0]["right_eye"]
+        eye_locations = {"left_eye": left_eye, "right_eye": right_eye}
+        return eye_locations
     else:
         return None
 
@@ -169,22 +172,22 @@ def rect_eye(eye_landmarks):
     return {"x1": x, "y1": y, "x2": x + width, "y2": y + height}
 
 
-def get_eyeball_location(img, eye_coordinate):
+def get_eyeball_location(cv_image_array, eye_coordinate):
     """
     返回在眼部矩形中眼球的位置
-    :param img: opencv中cv2.imread函数读取的图片
+    :param cv_image_array: opencv中cv2.imread函数读取的图片
     :param eye_coordinate: 眼部矩形的坐标, rect_eye返回的结果
     :return: percent: 用于判断眼球位置的有效的像素占总数的比例;
              eyeball_center: 眼球中心的坐标;
              nine_grid_result: 眼球九宫位置判断结果;
     """
-    eyeball_roi = img[eye_coordinate["y1"]:eye_coordinate["y2"], eye_coordinate["x1"]:eye_coordinate["x2"]]
+    eyeball_roi = cv_image_array[eye_coordinate["y1"]:eye_coordinate["y2"], eye_coordinate["x1"]:eye_coordinate["x2"]]
     eyeball_roi = cv2.cvtColor(eyeball_roi, cv2.COLOR_BGR2GRAY)  # 灰度化
     gray_val_total = 0  # 眼部矩形中所有像素灰度值的总值
     gray_val_min = 255  # 眼部矩形中所有像素灰度值中的最小值
 
-    for i in range(0, eyeball_roi.shape[0]):  # height
-        for j in range(0, eyeball_roi.shape[1]):  # width
+    for i in range(eyeball_roi.shape[0]):  # height
+        for j in range(eyeball_roi.shape[1]):  # width
             gray_val_total += eyeball_roi[i][j]
             if gray_val_min > eyeball_roi[i][j]:
                 gray_val_min = eyeball_roi[i][j]
@@ -196,16 +199,16 @@ def get_eyeball_location(img, eye_coordinate):
     counter = 0
 
     if ((gray_val_avg * 2) / 3) > gray_val_min:
-        for i in range(0, eyeball_roi.shape[0]):  # height
-            for j in range(0, eyeball_roi.shape[1]):  # width
+        for i in range(eyeball_roi.shape[0]):  # height
+            for j in range(eyeball_roi.shape[1]):  # width
                 if eyeball_roi[i][j] <= ((gray_val_avg * 2) / 3):
                     eyeball_center_y += i
                     eyeball_center_x += j
                     counter += 1
     # 如果有意外发生: 没有一个像素的灰度值小于灰度平均值的2/3, 则按照最小值的标准来算
     else:
-        for i in range(0, eyeball_roi.shape[0]):  # height
-            for j in range(0, eyeball_roi.shape[1]):  # width
+        for i in range(eyeball_roi.shape[0]):  # height
+            for j in range(eyeball_roi.shape[1]):  # width
                 if eyeball_roi[i][j] <= gray_val_min:
                     eyeball_center_y += i
                     eyeball_center_x += j
