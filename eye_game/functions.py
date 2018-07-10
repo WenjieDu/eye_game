@@ -58,8 +58,8 @@ def resize_image(cv_img_array):
     """
     if cv_img_array.shape[1] > 500:
         cv_img_array = cv2.resize(cv_img_array, (0, 0), fx=0.3, fy=0.3)
-    fr_img = CV2FR(cv_img_array)
-    face_location = get_face_location(fr_img)
+    fr_img_array = CV2FR(cv_img_array)
+    face_location = get_face_location(fr_img_array)
     if face_location:
         # min_val为脸部框四周距离图片边框的最小值
         min_val = min(face_location[0][0], face_location[0][3], (cv_img_array.shape[0] - face_location[0][2]),
@@ -106,12 +106,12 @@ def nine_grid(width, height, center):
         return 4
 
 
-def get_face_location(img):
+def get_face_location(fr_img_array):
     """
-    :param img_path: An image path
+    :param fr_img_array: face_recognition中所能使用的图片数组
     :return: A list of tuples of found face locations in css (top, right, bottom, left) order like [(171, 409, 439, 141)]
     """
-    face_location = fr.api.face_locations(img)
+    face_location = fr.api.face_locations(fr_img_array)
     return face_location
 
 
@@ -141,14 +141,14 @@ def eyeball_direction(cv_img_array):
         return None
 
 
-def get_eyes_location(img):
+def get_eyes_location(fr_img_array):
     """
-    :param img: An image (as a numpy array)
+    :param fr_img_array: An image (as a numpy array)
     :return: dict include eyes locations
     """
-    if fr.api.face_landmarks(img):
-        left_eye = fr.api.face_landmarks(img)[0]["left_eye"]
-        right_eye = fr.api.face_landmarks(img)[0]["right_eye"]
+    if fr.api.face_landmarks(fr_img_array):
+        left_eye = fr.api.face_landmarks(fr_img_array)[0]["left_eye"]
+        right_eye = fr.api.face_landmarks(fr_img_array)[0]["right_eye"]
         eyes_location = {"left_eye": left_eye, "right_eye": right_eye}
         return eyes_location
     else:
