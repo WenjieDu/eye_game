@@ -1,16 +1,44 @@
-# eye_game
+<p align="center">
+    <a id="EyeGame" href="#EyeGame">
+        <img src="https://raw.githubusercontent.com/WenjieDu/eye_game/master/EyeGameLogo.svg?sanitize=true" alt="EyeGame Title" title="EyeGame Title" width="200"/>
+    </a>
+</p>
+<p align="center">
+    <b>A Python Module for Parsing Gaze Direction</b>
+</p>
+<p align="center">
+    <a href="https://pypi.org/project/eye-game">
+        <img src="https://img.shields.io/pypi/v/eye-game?color=green" />
+    </a>
+    <a href="https://pepy.tech/project/eye-game">
+        <img src="https://static.pepy.tech/personalized-badge/eye-game?period=total&units=international_system&left_color=grey&right_color=blue&left_text=downloads/total" />
+    </a>
+    <a href="https://pepy.tech/project/eye-game">
+        <img src="https://pepy.tech/badge/eye-game/month" />
+    </a>
+    <a href="https://pepy.tech/project/eye-game">
+        <img src="https://pepy.tech/badge/eye-game/week" />
+    </a>
+</p>
 
-## Introduction
-This module is used to judge the eyeball direction: you input an image containing a human face, although the result may be not accurate, it will return the eyeball direction. 
+## ❖ Introduction
+This module is used to parse human gaze direction. Given an image containing a human face, the module will return its gaze direction.
 
-## Usage
-Steps:👇
-1. `pip install eye_game`
-2. `import eye_game`
-3. `eye_game.get_eyeball_direction(image_path)`
+## ❖ Usage
+You need to install it first by running command `pip install eye_game`, then import and use it!
 
-### Other APIs
-If you have converted a image to opencv numpy array, you can use `eye_game.api.get_eyeball_direction(cv_image_array)` to get the eyeball direction.
+```python
+import eye_game
 
-## PyPI
-[project on PyPI](https://pypi.org/project/eye-game/)
+eye_game.get_gaze_direction(image_path)
+```
+
+## ❖ Dependencies
+```yml
+{
+    "face_recognition",
+    "opencv-python",
+    "pillow",
+    "numpy"
+}
+```
