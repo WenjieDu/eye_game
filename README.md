@@ -33,6 +33,22 @@ import eye_game
 eye_game.get_gaze_direction(image_path)
 ```
 
+The result returned from function `get_gaze_direction` will be one of the nine cases:
+
+```
+{
+    "up",
+    "upper left",
+    "upper right",
+    "left",
+    "center",
+    "right",
+    "down",
+    "lower left",
+    "lower right"
+}
+```
+
 ## ❖ Dependencies
 ```yml
 {
